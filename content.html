@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>人机验证</title>
+    <script type="text/javascript" src="https://static.cnfeol.com/script/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript" src="https://ssl.captcha.qq.com/TCaptcha.js"></script>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div>
+        </div>
+    </form>
+</body>
+</html>
+<script type="text/javascript">
+    $(function () {
+        const captcha1=new TencentCaptcha('2003967432',function(res){
+            if(res.ret===0){
+                const{ticket,randstr}=res;
+                $.ajax({
+                    url: 'https://www.cnfeol.com/CaptchaVerify/VerifyCaptcha',
+                    type: 'post',
+                    data: { ticket: res.ticket, randstr: res.randstr },
+                    dataType: 'json',
+                    success:(res)=>{
+                        if(res.err_msg=="OK")
+                        {
+                            var returl = 'https://www.cnfeol.com/xitu/a-96.aspx?_d_id=f32e09db9d2de9f72e09655493e6fd';
+                            if(returl=='')
+                            {
+                                returl = 'https://www.cnfeol.com/';
+                            }
+                            window.location = returl;
+                        }else {
+                            captcha1.show();
+                        }
+                    },
+                })
+            }else if(res.ret==1){
+                alert('验证失败，请重试')
+            }
+        });
+        captcha1.show();
+    });
+</script>

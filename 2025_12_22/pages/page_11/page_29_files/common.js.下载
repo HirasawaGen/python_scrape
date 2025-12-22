@@ -1,0 +1,538 @@
+$(function () {    
+    var mRedirctCookieName = "mobileNotRedict";
+    var cookieDomain = "cnfeol.com";
+    if ((navigator.userAgent.match(/(iPhone|iPod|Android|ios)/i))) {
+        if (getQueryString("fm") === "1") {
+            deleteCookie(mRedirctCookieName, "/", cookieDomain);
+        } else {
+            var cookieValue = getCookie(mRedirctCookieName);
+            var date = new Date();
+            var expiresDays = 30;
+            date.setTime(date.getTime() + expiresDays * 24 * 3600 * 1000);
+            if (cookieValue == null) {
+                if (confirm("系统检测到您当前使用移动设备访问铁合金在线，为您跳转到触屏版网页吗？")) {
+                    setCookie(mRedirctCookieName, "0", date.toGMTString(), "/", cookieDomain, "");
+                    redirect2Mobile();
+                } else {
+                    setCookie(mRedirctCookieName, "1", date.toGMTString(), "/", cookieDomain, "");
+                }
+            } else if (cookieValue === "0") {
+                redirect2Mobile();
+            }
+        }
+    };    
+});
+
+function getCookieVal(offset) {
+    var endstr = document.cookie.indexOf(";", offset);
+    if (endstr === -1) {
+        endstr = document.cookie.length;
+    }
+    return unescape(document.cookie.substring(offset, endstr));
+};
+
+function getCookie(name) {
+    var arg = name + "=";
+    var alen = arg.length;
+    var clen = document.cookie.length;
+    var i = 0;
+    while (i < clen) {
+        var j = i + alen;
+        if (document.cookie.substring(i, j) === arg) {
+            return getCookieVal(j);
+        }
+        i = document.cookie.indexOf(" ", i) + 1;
+        if (i === 0) break;
+    }
+    return null;
+};
+
+
+function setCookie(name, value, expires, path, domain, secure) {
+    document.cookie = name + "=" + escape(value) + ((expires) ? "; expires=" + expires : "") + ((path) ? "; path=" + path : "") + ((domain) ? "; domain=" + domain : "") + ((secure) ? "; secure" : "");
+};
+
+
+function deleteCookie(name, path, domain) {
+    if (getCookie(name)) {
+        document.cookie = name + "=" + ((path) ? "; path=" + path : "") + ((domain) ? "; domain=" + domain : "") + "; expires=Thu, 01-Jan-1970 00:00:01 GMT";
+    }
+};
+
+
+function getQueryString(name) {
+    var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+    var r = window.location.search.substr(1).match(reg);
+    if (r != null) {
+        return unescape(r[2]);
+    }
+    return null;
+};
+
+function redirect2Mobile() {
+    var mUrl = $("#mArtUrl").val();                    
+    if (typeof mUrl === 'undefined' || mUrl === null || mUrl === '' || mUrl === 'undefined' || mUrl === 'null') {
+        mUrl = "https://m.cnfeol.com/";
+    }
+    if (mUrl.trim() === 'undefined' || mUrl.trim() === 'null') {
+        mUrl = "https://m.cnfeol.com/";
+    }
+    try {
+        new URL(mUrl);
+    } catch (e) {
+        mUrl = "https://m.cnfeol.com/";
+    }
+    location.replace(mUrl);
+};
+
+
+$('body').on('scroll', function (e) {
+    let scrollTop = $(this).scrollTop();
+    if (scrollTop > 118) {
+        $('.flow_container').addClass('flowstyle')
+    } else {
+        $('.flow_container').removeClass('flowstyle')
+    }
+});
+
+DropDown($('.ProductNavsBox>div'), 'mouseenter')
+
+function DropDown(el, eventType, showCb, clickCb) {
+    el[eventType](function () {
+        if ($(this).hasClass('hasChildren')) $(this).addClass('up')
+        const ul = $(this).find('ul')
+        ul.addClass('show animate__animated animate__fadeInUp animate__faster')
+        if (ul.length > 0 && ul.offset().left + ul.width() > $(window).width() - 50) {
+            ul.addClass('toLeft')
+        }
+        if (showCb && typeof showCb === "function") showCb(true)
+    }).mouseleave(function (e) {
+        if ($(this).hasClass('hasChildren')) $(this).removeClass('up')
+        const ul = $(this).find('ul')
+        ul.removeClass('show animate__animated animate__fadeInUp animate__faster')
+        if (showCb && typeof showCb === "function") showCb(false)
+        if (ul.hasClass('toLeft')) ul.removeClass('toLeft')
+    })
+    el.find('ul').children().each(function () {
+        $(this).click(function (e) {
+            e.stopPropagation()
+            el.find('ul').removeClass('show animate__animated animate__fadeInUp animate__faster')
+            if (clickCb && typeof clickCb === "function") clickCb($(this).text())
+        })
+    })
+}
+
+loopMove($('.News>div'), 1)
+async function loopMove(moveEl, showCount, mouseStop = false, byframe = false) {
+    if (moveEl.length === 0) return;
+    var timer = null
+    const childLen = moveEl.children().length
+    if (childLen <= showCount) return
+    if (childLen % showCount !== 0) {
+        const addCount = showCount - (childLen % showCount)
+        for (let i = 0; i < addCount; i++) {
+            moveEl.append(moveEl.children().eq(i).clone())
+        }
+    }
+    let ItemHeight = moveEl.children().eq(0).innerHeight()
+    let ItemWidth = moveEl.children().eq(0).innerWidth()
+    if (ItemWidth * showCount > moveEl.innerWidth()) {
+        ItemHeight = Math.ceil(moveEl.innerWidth() / ItemWidth) * ItemHeight
+    }
+
+    if (byframe) {
+        let animate_id
+        let distance = 0
+        let lastUpdateTime = 0
+        function doMove() {
+            let current_time = Date.now()
+            if (current_time - lastUpdateTime > 10) {
+                distance += 1
+                moveEl.css({
+                    'transform': 'translateY(' + -distance + 'px)'
+                })
+                lastUpdateTime = current_time
+            }
+            if (distance >= 37) {
+                // cancelAnimationFrame(animate_id)
+                insert_element()
+                moveEl.css({
+                    'transform': 'translateY(0px)'
+                })
+                distance = 0
+                //animate_id = requestAnimationFrame(doMove)
+            }
+            animate_id = requestAnimationFrame(doMove)
+        }
+        animate_id = requestAnimationFrame(doMove)
+        moveEl.mouseenter(function () {
+            cancelAnimationFrame(animate_id)
+        }).mouseleave(function () {
+            animate_id = requestAnimationFrame(doMove)
+        })
+    } else {
+        timer = setInterval(move_handler, 3000)
+    }
+
+
+    if (mouseStop && !byframe) {
+        moveEl.mouseenter(function () {
+            clearInterval(timer)
+            timer = null
+        }).mouseleave(function () {
+            timer = setInterval(move_handler, 3000)
+        })
+    }
+
+    function move_handler() {
+        moveEl.css({
+            'transition': 'all 0.4s linear',
+            'transform': 'translateY(' + -ItemHeight + 'px)'
+        })
+    }
+
+
+    if (!byframe) {
+        moveEl[0].addEventListener('webkitTransitionEnd', function () {
+            insert_element()
+            moveEl.css({
+                'transition': 'none',
+                'transform': 'translateY(0)'
+            })
+        })
+    }
+
+
+
+    function insert_element() {
+        const childrenList = moveEl.children()
+        for (let i = 0; i < showCount; i++) {
+            moveEl.append(childrenList.eq(i))
+        }
+    }
+
+
+}
+
+function loopMove2(moveEl, showCount, mouseStop = false, byframe = false) {
+    if (moveEl.length === 0) return;
+    let timer = null
+    const childLen = moveEl.children().length
+    if (childLen <= showCount) return
+    if (childLen % showCount !== 0) {
+        const addCount = showCount - (childLen % showCount)
+        for (let i = 0; i < addCount; i++) {
+            moveEl.append(moveEl.children().eq(i).clone())
+        }
+    }
+    let ItemHeight = moveEl.children().eq(0).innerHeight()
+    let ItemWidth = moveEl.children().eq(0).innerWidth()
+    if (ItemWidth * showCount > moveEl.innerWidth()) {
+        ItemHeight = Math.ceil(moveEl.innerWidth() / ItemWidth) * ItemHeight
+    }
+    timer = setInterval(move_handler, 3000)
+    if (mouseStop) {
+        moveEl.mouseenter(function () {
+            clearInterval(timer)
+            timer = null
+        }).mouseleave(function () {
+            timer = setInterval(move_handler, 3000)
+        })
+    }
+
+    function move_handler() {
+        moveEl.css({
+            'transition': 'all 1s',
+            'transform': 'translateY(' + -ItemHeight + 'px)'
+        })
+    }
+
+    moveEl[0].addEventListener('webkitTransitionEnd', function () {
+        const childrenList = moveEl.children()
+        for (let i = 0; i < showCount; i++) {
+            moveEl.append(childrenList.eq(i))
+        }
+        moveEl.css({
+            'transition': 'none',
+            'transform': 'translateY(0)'
+        })
+    })
+}
+
+
+function SwiperHandler(className, pagination = true) {
+    if (!document.querySelector(className)) return;
+    if (document.querySelectorAll(className + '>div .swiper-slide').length > 1) {
+        InitSwiper(className, pagination)
+    } else {
+        let observer = new MutationObserver((mutationsList) => {
+            if (document.querySelectorAll(className + '>div .swiper-slide').length > 1) {
+                clearTimeout(timer);
+                var timer = setTimeout(() => {
+                    InitSwiper(className, pagination)
+                })
+            }
+            observer.disconnect()
+        })
+        observer.observe($(`${className}`)[0], { childList: true, subtree: true })
+    }
+}
+
+
+function InitSwiper(className, pagination = true) {
+    var mySwiper = new Swiper(`${className}`, {
+        direction: 'horizontal',
+        loop: true,
+
+        autoplay: {
+            disableOnInteraction: false,
+            delay: 6000
+        },
+        pagination: {
+            el: '.swiper-pagination',
+            bulletClass: pagination ? 'currentBullet' : '.',
+            bulletActiveClass: 'activeCurrentBullet',
+            clickable: true,
+        }
+    })
+}
+
+function MoveActiveHandler(opt) {
+    let { moveEl, active, box, onChange, eventType = 'click', moveElWidth = '100%' } = opt
+    let calc = parseFloat(moveElWidth) / 100
+    $(box).append($(`<i class=${moveEl.slice(1)}></i>`))
+    let els = Array.from($(box).children()).filter(item => !$(item).hasClass(moveEl.slice(1)))
+    $(`${box} ${moveEl}`).css({
+        width: $(els[0]).innerWidth() + 'px',
+        left: els[0].offsetLeft + 'px'
+    })
+    $(els)[eventType](function () {
+        let elWidth = $(this).innerWidth()
+        let posLeft = $(this)[0].offsetLeft
+        $(els).removeClass(active)
+        $(this).addClass(active)
+        $(`${box} ${moveEl}`).css({
+            width: elWidth * calc + 'px',
+            left: moveElWidth === '100%' ? posLeft + 'px' : posLeft + ((elWidth - elWidth * calc) / 2) + 'px'
+        })
+        if (onChange && typeof onChange === "function") onChange($(this).index())
+    })
+}
+
+$('.TabPanelBox .Navs').each(function () {
+    const PanelList = $(this).parents('.Tabs').next().children()
+    const navs = $(this).find('a')
+    navs.each(function () {
+        $(this).mouseenter(function () {
+            navs.removeClass('navActive')
+            $(this).addClass('navActive')
+            PanelList.removeClass('showItemLists')            
+            PanelList.eq($(this).index()).addClass('showItemLists')
+        })
+    })
+})
+
+$('.PanelNavs').each(function () {
+    const PanelChild = $(this).next().children();
+    const navs = $(this).find('a:not([class=generalProdName])')
+    const hasGeneralProdName = $(this).children().length !== navs.length
+    navs.mouseenter(function () {
+        navs.removeClass(hasGeneralProdName ? 'activeTab2' : 'activeTab')
+        $(this).addClass(hasGeneralProdName ? 'activeTab2' : 'activeTab')
+        PanelChild.removeClass('showItemPanel')
+        const idx = navs.index($(this));
+        PanelChild.eq(idx).addClass('showItemPanel ')
+    })
+})
+$('.ItemPanelContent').on('animationend webkitAnimationEnd oAnimationEnd', function () {
+    $('.ItemPanelContent').removeClass('animate__animated animate__fadeInRight')
+})
+
+$('.SliderRightBox .itemFlexd').mouseenter(function () {
+    $(this).find('>div').css('display', 'flex')
+}).mouseleave(function () {
+    $(this).find('>div').css('display', 'none')
+})
+
+var timer
+$(window).resize(function (e) {
+    clearTimeout(timer)
+    timer = setTimeout(() => {
+        showFollowSliderHandler()
+    })
+})
+showFollowSliderHandler()
+
+function showFollowSliderHandler() {
+    if ($(window).width() < 1258) {
+        $('.SliderRightBox').css('display', 'none').removeClass('ShowSliderRightBox')
+        $('.FollowBtn').css('display', 'flex')
+    } else {
+        $('.SliderRightBox').css('display', 'flex')
+        $('.FollowBtn').css('display', 'none')
+    }
+}
+
+
+$('.FollowBtn').click(function () {
+    if ($('.SliderRightBox').css('display') !== 'flex') {
+        $('.SliderRightBox').addClass('ShowSliderRightBox animate__animated animate__bounceInRight')
+        $(this).css('display', 'none')
+    } else {
+        $('.SliderRightBox').addClass('animate__animated animate__bounceOutRight')
+    }
+})
+$('.SliderRightBox').on('animationend webkitAnimationEnd oAnimationEnd', function () {
+    if ($('.SliderRightBox').hasClass('animate__bounceOutRight')) $('.SliderRightBox').removeClass('ShowSliderRightBox')
+    $('.SliderRightBox').removeClass('animate__animated animate__bounceInRight animate__bounceOutRight')
+})
+
+$('.ScrollToTop').click(function (e) {
+    e.stopPropagation()
+    $('html, body').animate({ scrollTop: 0 }, 'slow');
+})
+
+$(document.body).scroll(function () {
+    $('.SliderRightBox .ScrollToTop').css('transform', `translateX(${$(document.body).scrollTop() > 300 ? '0px' : '100px'})`)
+})
+
+$('.SearchInput input').keyup(function (event) {
+    if (event.keyCode !== 13) return
+    searchKeyword()
+})
+
+$('.SearchInput').on('click', 'i', function () {
+    searchKeyword()
+})
+
+function searchKeyword() {
+    var keywords = $('.SearchInput input').val()
+    url = "https://hjs.cnfeol.com/search.aspx?key=" + keywords + "&ie=utf-8&cl=0"
+    window.open(url, "_blank")
+}
+
+function openCommonLayer(opt) {
+    let index = layer.open({
+        type: 1,
+        title: false,
+        closeBtn: 0,
+        skin: 'layerBox',
+        area: 'auto',
+        content: `
+             <div class="modifyLayer commonLayer">
+                <div class="layerHeader">
+                    <span>${opt.title}</span>
+                    <i class="closeLayer" onclick="closeLayerHandler()"></i>
+                </div>
+                <div class="Content">
+                    <span>${opt.content}</span>
+                    <div>
+                        ${opt.btns.reduce((sum, item, index) => (sum += `<a class="submitBtn" href="javascript:;">${item}</a>`), '')}
+                    </div>
+                </div>
+            </div>
+        `,
+        end: function () {
+            opt = {}
+        }
+
+    });
+    $('body').on('click', '.commonLayer a', function () {
+        if ($(this).index() === 0) {
+            if (opt.success && typeof opt.success === "function") {
+                opt.success()
+            }
+            closeLayerHandler(index)
+        } else {
+            if (opt.cancel && typeof opt.cancel === "function") {
+                opt.cancel()
+            }
+            closeLayerHandler(index)
+        }
+    })
+}
+
+function closeLayerHandler(index, cb) {
+    if (index) return layer.close(index)
+    if (cb && typeof cb === "function") cb()
+    layer.closeAll()
+}
+
+
+function mobileAdapter() {
+    const width = 1200
+    let scale = screen.width / width
+    let content = `width=${width}, initial-scale=${scale}, maximum-scale=${scale}, minimum-scale=${scale}`
+    let meta = document.querySelector('meta[name=viewport]')
+    if (!meta) {
+        meta = document.createElement('meta')
+        meta.setAttribute('name', 'viewport')
+        document.head.appendChild(meta)
+    }
+    meta.setAttribute('content', content)
+}
+mobileAdapter()
+window.onorientationchange = mobileAdapter
+
+
+showTipsHandler(['.CFO_Price table tbody td:nth-child(1)', '.CFO_Price table tbody td:nth-child(2)', '.CFO_Price table tbody td:nth-child(7)'])
+function showTipsHandler(classArr) {
+    classArr.forEach(itemClass => {
+        $(itemClass).mouseenter(function () {
+            if ($(this)[0].scrollWidth <= $(this)[0].offsetWidth) return
+            layer.tips($(this).text(), $(this), {
+                skin: 'customTip',
+                tips: [1, '#16b777'],
+                time: 0
+            })
+        }).mouseout(function () {
+            layer.closeAll()
+        })
+    })
+}
+
+$(".cnfeol_datacenter_chart").each(function () {
+    showChartFrame($(this), $(this).data("chart-id"), $(this).data("chart-width"), $(this).data("chart-height"), $(this).data("chart-begints"), $(this).data("chart-endts"));
+});
+
+function showChartFrame(container, cid, width, height, begints, endts) {
+    if (!width || width <= 0) width = "100%";
+    if (!height || height <= 0) height = 300;
+    var chartUrl = "https://data.cnfeol.com/Chart/ChartLite.aspx";
+    chartUrl += "?cid=" + cid + "&amp;width=" + width + "&amp;height=" + height;
+    if (begints && begints > 0) chartUrl += "&amp;bts=" + begints;
+    if (endts && endts > 0) chartUrl += "&amp;ets=" + endts;
+    $(container).html("<iframe class='cnfeol_datacenter_chart_frame' width='" + width + "' height='" + height + "' src='" + chartUrl + "' frameborder='0' scrolling='no' style='overflow:auto;'></iframe>");
+}
+
+
+$('.iframeLayer a').click(function (e) {
+    e.preventDefault()
+    let url = $(this).attr('href')
+    layer.open({
+        type: 2,
+        title: $(this).text(),
+        shadeClose: true,
+        maxmin: true,
+        area: ['900px', '600px'],
+        content: url
+    });
+})
+
+
+$('.UserBox').mouseenter(function () {
+    $('.UserBox .arrow_icon').css('transform', 'rotate(180deg)')
+    $('.dropdown_box').removeClass('animate__animated animate__fadeInUp animate__fadeOut animate__faster')
+    $('.dropdown_box').css('display', 'flex').addClass('animate__animated animate__fadeInUp animate__faster')
+}).mouseleave(function () {
+    $('.dropdown_box').addClass('animate__animated animate__fadeOut animate__faster')
+    $('.UserBox .arrow_icon').css('transform', 'rotate(0deg)')
+})
+
+$('.dropdown_box').on('animationend', function () {
+    if ($(this).hasClass('animate__fadeOut')) $(this).css('display', 'none')
+    $(this).removeClass('animate__animated animate__fadeInUp animate__fadeOut animate__faster')
+})
+
+
+

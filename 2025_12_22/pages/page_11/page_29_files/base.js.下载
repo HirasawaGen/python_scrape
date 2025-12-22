@@ -1,0 +1,58 @@
+var userAgent = navigator.userAgent;
+var msie = userAgent.indexOf('MSIE ');
+if (msie > 0 || !!navigator.userAgent.match(/Trident.*rv\:11\./)) {
+    if (userAgent.indexOf('.NET') >= 0) {
+        checkedVersion()
+    } else {
+        document.cookie = "go_old=1; domain=.cnfeol.com; path=/";
+        window.location.reload();
+    }
+}
+
+var _hmt = _hmt || [];
+(function () {
+    var hm = document.createElement("script");
+    hm.src = "https://hm.baidu.com/hm.js?7d36fb642594f3133d486f18ce21e9fd";
+    var s = document.getElementsByTagName("script")[0];
+    s.parentNode.insertBefore(hm, s);
+})();
+
+
+function trackOldversionButtonclick(isDebug, pc, mId) {
+    if (isDebug == "false") {
+        gtag('event', 'old_version_button_click', {
+            'event_category': 'button_clicks',
+            'event_label': 'mId_' + pc + '_' + mId
+        });
+    }        
+    $.ajax({
+        url: "/default/gotoold",
+        method: 'post',
+        data: {
+            pc : pc
+        },
+        success: function () {
+            location.href = document.URL;
+        }
+    })
+}
+
+
+function checkedVersion() {
+    document.write('<div class="VersionBrowser" style="width: 100%;height: ' + document.documentElement.clientHeight + 'px;position: fixed;left: 0;top: 0;background-color: #cccccc;z-index: 2000;">\n' +
+        '    <div style="width: 90%;margin: ' + (document.documentElement.clientHeight / 2 - 258) + 'px auto;border: 1px solid gray;padding: 20px;background-color: #FFF;border-radius: 20px;">\n' +
+        '        <div style="color: gray;">\n' +
+        '            <p style="text-align: center;font-size: 24px;font-weight: bold;">非常抱歉，您的浏览器页面无法正常显示</p>\n' +
+        '            <p style="font-size: 18px;text-align: center;padding: 10px 0;">系统检测到您正在使用的是360、搜狗等双核浏览器的IE兼容模式，由于IE浏览器已停止更新本网站已不再支持IE浏览器及内核运行</p>\n' +
+        '            <p style="text-align: center;font-size: 18px;">请调整您的浏览器到极速模式运行</p>\n' +
+        '            <p style="font-size: 18px;">切换至极速模式方法:</p>\n' +
+        '        </div>\n' +
+        '        <div>\n' +
+        '            <img style="display: block;margin: 10px auto;width: 100%;" src="https://static.cnfeol.com/2023/img/tip1.png" alt="">\n' +
+        '            <img src="https://static.cnfeol.com/2023/img/arrow_down.svg" style="display: block;margin: 0 auto;width: 60px" alt="">\n' +
+        '            <img style="display: block;margin: 10px auto;width: 100%;" src="https://static.cnfeol.com/2023/img/tip2.png" alt="">\n' +
+        '            <p style="text-align: center;font-weight: bold;color:#2670C8;">本图片为360浏览器，其它双核浏览器切换方式基本一致</p>\n' +
+        '        </div>\n' +
+        '    </div>\n' +
+        '</div>')
+}
