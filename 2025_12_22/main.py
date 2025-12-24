@@ -4,6 +4,7 @@ from functools import wraps
 import json
 from pathlib import Path
 from time import time_ns
+from collections import OrderedDict
 import re
 
 import aiohttp
@@ -70,9 +71,15 @@ async def fetch_page(page: int) -> list[dict]:
     :return: 包含链接的列表
     '''
     cookie = (ROOT / 'cookie.txt').read_text()
-    headers = {'Cookie': cookie}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Cookie': cookie,
+    }
     async with aiohttp.ClientSession(headers=headers) as session:
-        resp = await session.get(f'https://www.cnfeol.com/xitu/a-{page}.aspx')
+        # resp = await session.get(f'https://www.cnfeol.com/xitu/a-{page}.aspx')
+        # resp = await session.get(f'https://www.cnfeol.com/xitu_ab_14/all-{page}.aspx')
+        # resp = await session.get(f'https://www.cnfeol.com/xituhuahewu_ab_3/all-{page}.aspx')
+        resp = await session.get(f'https://www.cnfeol.com/xituhuahewu_ab_17/all-{page}.aspx')
         html_content = await resp.text()
     soup = BeautifulSoup(html_content, 'html.parser')
     data_list_box = soup.select_one('div.dataListBox')
@@ -242,28 +249,53 @@ def format_data(page: int):
         except KeyError:
             print(f'page_{page} content_{i} is missing publish_time or source.')
             continue
-        data[i]['publish_time'] = publish_time.replace('年', '-').replace('月', '-').replace('日', '')
+        publish_time = publish_time.replace('年', '-').replace('月', '-').replace('日', '')
+        publish_time += ' 00:00:00'
+        data[i]['publish_time'] = publish_time
         data[i]['source'] = source.split('来源:')[1]
-        with json_file.open('w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=4)
+    with json_file.open('w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
     return data
 
 
-async def main():
-    with (ROOT / 'cookie.txt').open('r', encoding='utf-8') as f:
-        cookie = f.read()
-    # tasks: list[Awaitable] = []
-    # for i in range(begin, end, -1):
-    #     await fetch_content(i, cookie)
-        # tasks.append(fetch_content(i, cookie))
-    # await asyncio.gather(*tasks)
-    # tasks: list[Awaitable] = []
-    # for i in range(1, 101):
-    #     tasks.append(load_data(i))
-    # data = await asyncio.gather(*tasks)
-    for i in range(1, 101):
-        regex_check(i)
+def merge_data(start_id: int) -> list[OrderedDict]:
+    all_data = []
+    id_ = start_id
+    for i in range(1, 1+1):
+        json_file = ROOT / 'results' / f'page_{i}.json'
+        with json_file.open('r', encoding='utf-8') as f:
+            data = json.load(f)
+        for j in range(len(data)):
+            if len(data[j]['content']) <= 50:
+                continue
+            if data[j]['publish_time'][:4] < '2010':
+                continue
+            ordered_data = OrderedDict()
+            ordered_data['id'] = f'{id_:08d}'
+            ordered_data['title'] = data[j]['title']
+            ordered_data['publish_time'] = data[j]['publish_time'] + ' 00:00:00'
+            ordered_data['source'] = data[j]['source']
+            ordered_data['url'] = data[j]['url']
+            ordered_data['content'] = data[j]['content']
+            ordered_data['catg'] = '行业研究'
+            all_data.append(ordered_data)
+            id_ += 1
+    with (ROOT / 'all_data.json').open('w', encoding='utf-8') as f:
+        json.dump(all_data, f, ensure_ascii=False, indent=4)
+    return all_data
 
+
+async def main():
+    cookies = (ROOT / 'cookie.txt').read_text()
+    for i in range(1, 1+1):
+        # data = await fetch_page(i)
+        # print(f'page_{i} fetched, {len(data)} links.')
+        # await fetch_content(i, cookies)
+        # await load_data(i)
+        # format_data(i)
+        ...
+        
+    merge_data(30002580)
 
 if __name__ == '__main__':
     asyncio.run(main())
