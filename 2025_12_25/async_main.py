@@ -15,6 +15,8 @@ START_ID = 30003402
 TIMEOUT = 500000  # 网速太慢了
 
 
+# TODO: 可以使用消息队列,一个协程返回link，另一个协程将link转为字典，最后一个协程将数据保存至本地
+
 async def locate_links(page: Page) -> list[str]:
     await page.wait_for_selector('div.post-multi h2 > a', timeout=TIMEOUT)
     a_tags = page.locator('div.post-multi h2 > a')
@@ -68,7 +70,7 @@ async def main():
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=HEADLESS)
         page = await browser.new_page()
-        for i in range(434, TOTAL_PAGE+1):
+        for i in range(1334, TOTAL_PAGE+1):
             url = URL_PATTERN.format(i)
             print(f'Loading {url}')
             try:
