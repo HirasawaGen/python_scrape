@@ -15,7 +15,7 @@ def re_id(json_path: Path, id_: int):
         
         
 if __name__ == '__main__':
-    json_path = RESULTS_ROOT / '行业研究.json'
-    id_ = 30008230
+    json_path = RESULTS_ROOT / '锂电网_材料研究_技术_204.json'
+    id_ = 30008994
     re_id(json_path, id_)
     
