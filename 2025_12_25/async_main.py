@@ -22,6 +22,7 @@ async def locate_links(page: Page) -> list[str]:
     a_tags = page.locator('div.post-multi h2 > a')
     a_tags_count = await a_tags.count()
     links = []
+    # ===============================>
     for i in range(a_tags_count):
         a_tag = a_tags.nth(i)
         text = await a_tag.inner_text()
