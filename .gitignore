@@ -12,3 +12,4 @@ wheels/
 zenian.db
 *.json
 *.zip
+*.yaml

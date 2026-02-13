@@ -17,7 +17,7 @@ import aiofiles
 
 
 class ZenianData(TypedDict, total=False):
-    id: Required[str | int]
+    id: str | int
     title: str
     publish_time: str
     source: str
@@ -126,6 +126,8 @@ class ZenianTable:
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        if self._conn is None:
+            return
         if exc_type is not None:
             await self._conn.rollback()
         if self._total_changed > 0:
@@ -175,6 +177,9 @@ class ZenianTable:
         """
         modify_count = 0
         
+        if self._conn is None:
+            return 0
+
         for datum in data:
             if not valid_data(datum):
                 if strict:
@@ -197,6 +202,8 @@ class ZenianTable:
                 datum.get('catg'),
                 datum.get('section')
             )
+            if self._conn is None:
+                return 0
             # 修复 async with 用法错误
             cursor = await self._conn.execute(sql, params)
             await self._conn.commit()
@@ -215,7 +222,22 @@ class ZenianTable:
         sql = f"""--sql
         UPDATE {self._name} SET content = ? WHERE url = ?
         """
+        if self._conn is None:
+            return
         cursor = await self._conn.execute(sql, (content, url))
+        await self._conn.commit()
+        row_count = cursor.rowcount
+        if row_count > 0:
+            self._total_changed += 1
+    
+    async def fill_content_and_time(self, url: str, content: str, time: str):
+        content = process_content(content)
+        sql = f"""--sql
+        UPDATE {self._name} SET content = ?, publish_time = ? WHERE url = ?
+        """
+        if self._conn is None:
+            return
+        cursor = await self._conn.execute(sql, (content, time, url))
         await self._conn.commit()
         row_count = cursor.rowcount
         if row_count > 0:
@@ -243,6 +265,8 @@ class ZenianTable:
         FROM {self._name}
         WHERE {' AND '.join(conditions)}
         """
+        if self._conn is None:
+            return []
         cursor = await self._conn.execute(sql, params)
         rows = await cursor.fetchall()
         result = []
@@ -257,11 +281,16 @@ class ZenianTable:
         return result
         
 
-    async def export(self, source: str, catg: str = '', section: str = '', min_length: int = -1) -> Path:
+    async def export(self, source: str, catg: str = '', section: str = '', min_length: int = 50) -> Path:
         '''
+        export data to json file
+
+        name of json file is like: {source}_{catg}_{section}_{count}.json
+
         :param source: source of zenian data
         :param catg: category of zenian data
         :param section: section of zenian data
+        :param min_length: minimum length of content to be exported, -1 means no limit
         :return: json file path of exported data
         '''
         file_name = source
@@ -285,6 +314,8 @@ class ZenianTable:
         sql = f"""--sql
         SELECT id, content FROM {self._name}
         """
+        if self._conn is None:
+            return
         cursor = await self._conn.execute(sql)
         rows = await cursor.fetchall()
         for row in rows:
@@ -315,7 +346,7 @@ class ZenianTable:
         url: str | None = None
         if isinstance(key, int):
             id_ = str(key)
-        else:
+        elif isinstance(key, str):
             if key.isdigit():
                 id_ = key
             else:
@@ -378,7 +409,7 @@ class ZenianTable:
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """
         params = (
-            value['id'],
+            value.get('id'),
             value.get('title'),
             value.get('publish_time'),
             value.get('source'),
@@ -450,7 +481,7 @@ class ZenianTable:
         :return: bool
         '''
         # TODO:
-        pass
+        return False
 
 
 async def main():

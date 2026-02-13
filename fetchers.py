@@ -71,9 +71,9 @@ class BasePageFetcher(ABC):
                 soup = await self._to_soup(page_idx)
                 data = await self.parse_soup(soup)
                 for i in range(len(data)):
-                    data[i]['source'] = self._source
-                    data[i]['catg'] = self._catg
-                    data[i]['section'] = self._section
+                    data[i]['source'] = self._source  # type: ignore
+                    data[i]['catg'] = self._catg  # type: ignore
+                    data[i]['section'] = self._section  # type: ignore
                 async with self._table as table:
                     modify_count = await table.save(data)
                 logger.info(f'Saved {modify_count} data for page {page_idx}')

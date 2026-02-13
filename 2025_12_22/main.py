@@ -27,7 +27,12 @@ def output_json(file_path_template: str):
         async def wrapper(*args, **kwargs):
             root = Path(__file__).parent
             file_path = root / (file_path_template % args)
+            # if file_path.exists():
+            #     print(f'file {file_path.name} already exists, skip.')
+            #     return []
             data = await func(*args, **kwargs)
+            if len(data) == 0:
+                return data
             with open(file_path, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=4)
             return data
@@ -79,17 +84,27 @@ async def fetch_page(page: int) -> list[dict]:
         # resp = await session.get(f'https://www.cnfeol.com/xitu/a-{page}.aspx')
         # resp = await session.get(f'https://www.cnfeol.com/xitu_ab_14/all-{page}.aspx')
         # resp = await session.get(f'https://www.cnfeol.com/xituhuahewu_ab_3/all-{page}.aspx')
-        resp = await session.get(f'https://www.cnfeol.com/xituhuahewu_ab_17/all-{page}.aspx')
+        # resp = await session.get(f'https://www.cnfeol.com/wu_ab_3/all-{page}.aspx')
+        # resp = await session.get(f'https://www.cnfeol.com/wu/a-{page}.aspx')
+        # resp = await session.get(f'https://www.cnfeol.com/wu_ab_14/all-{page}.aspx')
+        # resp = await session.get(f'https://www.cnfeol.com/wu_ab_14/all-{page}.aspx')
+        resp = await session.get(f'https://www.cnfeol.com/mu/n-8-{page}.aspx')
         html_content = await resp.text()
     soup = BeautifulSoup(html_content, 'html.parser')
     data_list_box = soup.select_one('div.dataListBox')
     if data_list_box is None:
         return []
     a_tags = data_list_box.select('a')
-    return [{'url': str(a_tag.get('href', ''))} for a_tag in a_tags]
+    return [{
+        'url': str(a_tag.get('href', '')),
+        'title': a_tag.select('span')[0].text.strip(),
+        'publish_time': a_tag.select('span')[1].text.strip().replace('.', '-') + ' 00:00:00',
+        'source': '铁合金在线',
+        'catg': '政策法规',
+    } for a_tag in a_tags]
 
 
-@delay(30)
+@delay(10)
 async def fetch_content(page: int, cookie: str = '') -> None:
     '''
     读取json结果，并fetch其中的url
@@ -118,6 +133,12 @@ async def fetch_content(page: int, cookie: str = '') -> None:
         headers = {'Cookie': cookie}
     
     for i, item in enumerate(json_content):
+        html_page_root = ROOT / 'pages' / f'page_{page}'
+        if not html_page_root.exists():
+            html_page_root.mkdir(parents=True)
+        html_path = html_page_root / f'content_{i}.html'
+        if html_path.exists():
+            continue
         url = item['url']
         if i % 5 == 0 and i > 0:
             print('sleep...')
@@ -125,15 +146,14 @@ async def fetch_content(page: int, cookie: str = '') -> None:
         async with aiohttp.ClientSession(headers=headers) as session:
             async with session.get(url) as resp:
                 html_content = await resp.text(encoding='utf-8')
-            if '人机验证' in html_content:
-                print(f'fetch content_{i} at page_{page} failed.')
-                continue
-            html_page_root = ROOT / 'pages' / f'page_{page}'
-            if not html_page_root.exists():
-                html_page_root.mkdir(parents=True)
-            html_path = html_page_root / f'content_{i}.html'
-            html_path.write_text(html_content, encoding='utf-8')
-            print(f'fetched content_{i} at page_{page}')
+        if '人机验证' in html_content:
+            print(f'fetch content_{i} at page_{page} failed.')
+            continue
+        html_path.write_text(html_content, encoding='utf-8')
+        print(f'fetched content_{i} at page_{page}')
+        await asyncio.sleep(1)
+    
+    print(f'page_{page} fetched')
 
 
 async def _load_file(path: Path) -> str:
@@ -200,21 +220,11 @@ async def load_data(page: int) -> list[dict]:
             data[i]['content'] = 'VIP only'
             continue
         soup = BeautifulSoup(html_content, 'lxml')
-        article_box = soup.select_one('div.articleBox')
-        content_soup = article_box.select_one('#contentdetail_info_detail')
-        p_tag_content: list[str] = []
-        for p_tag in content_soup.find_all('p'):
-            p_tag_content.append(p_tag.get_text(strip=True))
-        content = '\n'.join(p_tag_content)
-        title = article_box.select_one('h3').get_text(strip=True)
-        article_subtitle = article_box.select_one('div.prodCategory > div:nth-child(1) > div.articleSubTitle')
-        article_subtitle_span_tags = article_subtitle.select('span')
-        publish_time = article_subtitle_span_tags[0].get_text(strip=True)
-        source = article_subtitle_span_tags[1].get_text(strip=True)
-        data[i]['title'] = title
-        data[i]['content'] = content
-        data[i]['publish_time'] = publish_time
-        data[i]['source'] = source
+        content_soup = soup.select_one('#contentdetail_info_detail')
+        if content_soup is None:
+            continue
+        data[i]['content'] = content_soup.get_text(strip=True)
+        
     return data
 
 
@@ -287,15 +297,19 @@ def merge_data(start_id: int) -> list[OrderedDict]:
 
 async def main():
     cookies = (ROOT / 'cookie.txt').read_text()
-    for i in range(1, 1+1):
+    for i in range(3, 22+1):
+        # await fetch_page(i)
+        await fetch_content(i, cookies)
+    # for i in range(1, 0, -1):
         # data = await fetch_page(i)
         # print(f'page_{i} fetched, {len(data)} links.')
         # await fetch_content(i, cookies)
         # await load_data(i)
         # format_data(i)
-        ...
-        
-    merge_data(30002580)
+    
+    
+
+    # merge_data(30002580)
 
 if __name__ == '__main__':
     asyncio.run(main())
