@@ -49,11 +49,7 @@ def valid_data(data: ZenianData) -> TypeGuard[ZenianData]:
         content = data['content']
         if not isinstance(content, str):
             return False
-        content = content.strip()
-        content = content.replace(' ', '')
-        content = content.replace('\t', '')
-        content = content.replace('\r', '\n')
-        content = re.sub(r'\n{2,}', '\n', content)
+        content = process_content(content)
         data['content'] = content
     if 'publish_time' in data:
         publish_time = data['publish_time']
@@ -242,7 +238,20 @@ class ZenianTable:
         row_count = cursor.rowcount
         if row_count > 0:
             self._total_changed += 1
-        
+    
+    async def fill_content_and_section(self, url: str, content: str, section: str):
+        content = process_content(content)
+        sql = f"""--sql
+        UPDATE {self._name} SET content = ?, section = ? WHERE url = ?
+        """
+        if self._conn is None:
+            return
+        cursor = await self._conn.execute(sql, (content, section, url))
+        await self._conn.commit()
+        row_count = cursor.rowcount
+        if row_count > 0:
+            self._total_changed += 1
+
         
     async def load(self, source: str, catg: str = '', section: str = '') -> list[ZenianData]:
         '''
